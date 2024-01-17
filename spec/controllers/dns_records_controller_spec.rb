@@ -349,6 +349,71 @@ RSpec.describe Api::V1::DnsRecordsController, type: :controller do
   end
 
   describe '#create' do
-    # TODO
+    context 'with valid params' do
+      let(:payload) do
+        {
+          dns_records: {
+            ip: Faker::Internet.ip_v4_address,
+            hostnames_attributes: [
+              {
+                hostname: Faker::Internet.domain_name
+              },
+              {
+                hostname: Faker::Internet.domain_name
+              }
+            ]
+          }
+        }
+      end
+
+      it 'responds with created status' do
+        post :create, params: payload
+
+        expect(response).to have_http_status(:ok)
+      end
+
+      it 'responds with dns_record id' do
+        post :create, params: payload
+
+        expect(parsed_body[:id]).to be_present
+      end
+
+      it 'creates dns_record' do
+        expect{ post :create, params: payload }.to change{ DnsRecord.count }.by(1)
+      end
+
+      it 'creates dns_record hostnames' do
+        expect{ post :create, params: payload }.to change{ Hostname.count }.by(2)
+      end
+    end
+
+    context 'without valid params' do
+      let(:payload) do
+        {
+          dns_records: {
+            ip: 'test',
+            hostnames_attributes: [
+              {
+                hostname: '.dff'
+              }
+            ]
+          }
+        }
+      end
+
+      before { post :create, params: payload }
+
+      it 'responds with unprocessable entity status' do
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+
+      it 'responds with record errors' do
+        expect(parsed_body.dig(:errors, :record)).to be_present
+      end
+
+      it 'responds with hostnames errors' do
+        expect(parsed_body.dig(:errors, :hostnames)).to be_present
+      end
+    end
   end
 end

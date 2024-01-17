@@ -45,8 +45,8 @@ module Api
 
         excluded = params[:excluded].to_s.split(',')
         dns_records.merge!(DnsRecord.where.not('hostnames.hostname': excluded)) if excluded.any?
-        
-        dns_records.limit(params[:page].to_i * DEFAULT_PER_PAGE)
+
+        dns_records.paginate(page: params[:page])
       end
     end
   end

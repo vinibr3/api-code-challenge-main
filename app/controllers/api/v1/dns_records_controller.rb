@@ -7,10 +7,13 @@ module Api
 
         dns_records = filtered_dns_records
         hostnames = dns_records.map{|h| h.hostnames.map(&:hostname) }.flatten!
+
         related_hostnames =
           hostnames.uniq.map {|h| { count: hostnames.count(h), hostname: h } }
+        related_hostnames =
+          related_hostnames.delete_if{|r| r[:hostname].in?(included) } if included.any?
 
-        render json: { total_records: related_hostnames.length,
+        render json: { total_records: dns_records.length,
                        records: dns_records.map(&:serialize),
                        related_hostnames: related_hostnames }
       end
@@ -40,13 +43,25 @@ module Api
       def filtered_dns_records
         dns_records = DnsRecord.includes(:hostnames)
 
-        included = params[:included].to_s.split(',')
-        dns_records.merge!(DnsRecord.where.not('hostnames.hostname': included)) if included.any?
+        if included.any?
+          records = dns_records.where(hostnames: { hostname: [included] })
+          records = records.select do |r|
+            record_hostnames = r.hostnames.map(&:hostname)
+
+            included.all?{|h| h.in?(record_hostnames) }
+          end
+
+          dns_records.merge!(DnsRecord.where(id: records.map(&:id)))
+        end
 
         excluded = params[:excluded].to_s.split(',')
-        dns_records.merge!(DnsRecord.where.not('hostnames.hostname': excluded)) if excluded.any?
+        dns_records = dns_records.merge!(DnsRecord.where.not(hostnames: Hostname.where(hostname: excluded))) if excluded.any?
 
         dns_records.paginate(page: params[:page])
+      end
+
+      def included
+        params[:included].to_s.split(',')
       end
     end
   end

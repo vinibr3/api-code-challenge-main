@@ -15,6 +15,8 @@ gem 'bootsnap', '>= 1.4.2', require: false
 gem 'validates_hostname', '~> 1.0'
 # pagination
 gem 'will_paginate', '~> 4.0'
+# model tests
+gem 'shoulda-matchers', '~> 5.3'
 
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
 # gem 'rack-cors'
@@ -32,6 +34,10 @@ group :development do
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
+end
+
+group :test do
+  gem 'factory_bot_rails', '~> 6.4', '>= 6.4.3'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
